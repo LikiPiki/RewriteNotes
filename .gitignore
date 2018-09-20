@@ -1,0 +1,6 @@
+RewriteBot
+.DS_Store
+
+#editors
+.idea
+.vscode
