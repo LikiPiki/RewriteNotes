@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -22,14 +23,22 @@ func main() {
 	userController := postgres.UserService{
 		DB: db,
 	}
+	noteController := postgres.NoteService{
+		DB: db,
+	}
 
 	r := chi.NewRouter()
 
 	userRouter := routes.UserHandlers{
 		Controller: userController,
 	}.Router()
+	noteRouter := routes.NoteHandlers{
+		Controller: noteController,
+	}.Router()
 
 	r.Mount("/user", userRouter)
+	r.Mount("/note", noteRouter)
 
+	fmt.Println("Listening on port :3000")
 	http.ListenAndServe(":3000", r)
 }

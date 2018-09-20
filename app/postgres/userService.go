@@ -47,7 +47,7 @@ func (service UserService) GetAll() (app.Users, error) {
 	return users, nil
 }
 
-func (service UserService) GetUserByUsername(username string) (app.User, error) {
+func (service UserService) Get(username string) (app.User, error) {
 
 	var user app.User
 	err := service.DB.QueryRow(
@@ -68,15 +68,26 @@ func (service UserService) GetUserByUsername(username string) (app.User, error) 
 
 }
 
-func (service UserService) Create() error {
+func (service UserService) Create(user app.User) error {
 	cryptPassword, err := crypt.CryptPassword(user.Password)
 
 	if err != nil {
 		return err
 	}
-	_, err = DB.Query(
+	_, err = service.DB.Query(
 		"INSERT INTO users (username, password, is_admin) VALUES ($1, $2, $3)",
 		user.Username, cryptPassword, user.IsAdmin,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (service UserService) Delete(id string) error {
+	_, err := service.DB.Query(
+		"DELETE FROM users WHERE id = $1",
+		id,
 	)
 	if err != nil {
 		return err
