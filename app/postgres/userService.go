@@ -5,6 +5,7 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/likipiki/RewriteNotes/app"
+	"github.com/likipiki/VueGoNotes/server/crypt"
 )
 
 // UserService represents a PostgreSQL implementation of app.UserService.
@@ -12,78 +13,70 @@ type UserService struct {
 	DB *sql.DB
 }
 
-func (service UserService) Get(id string) (app.Note, error) {
-	var note app.Note
-	row := service.DB.QueryRow(
-		"SELECT id, user_id, title, content, created_at FROM notes WHERE id = $1",
-		&id,
-	)
+func (service UserService) GetAll() (app.Users, error) {
 
-	err := row.Scan(
-		&note.ID,
-		&note.UserID,
-		&note.Title,
-		&note.Content,
-		&note.CreatedAt,
-	)
-	if err != nil {
-		return app.Note{}, err
-	}
-
-	return note, nil
-}
-
-func (service UserService) GetAll(id string) (app.Notes, error) {
 	rows, err := service.DB.Query(
-		"SELECT id, user_id, title, content, created_at FROM notes WHERE user_id = $1",
-		&id,
+		"SELECT id, username, password, is_admin FROM users",
 	)
 
 	if err != nil {
 		return nil, err
 	}
-	var note app.Note
-	notes := make(app.Notes, 0)
+
+	var users app.Users
+	var user app.User
 
 	for rows.Next() {
-		err := rows.Scan(
-			&note.ID,
-			&note.UserID,
-			&note.Title,
-			&note.Content,
-			&note.CreatedAt,
+		err = rows.Scan(
+			&user.Id,
+			&user.Username,
+			&user.Password,
+			&user.IsAdmin,
 		)
 
 		if err != nil {
 			return nil, err
 		}
 
-		notes = append(notes, note)
+		users = append(users, user)
+
 	}
 
-	return notes, nil
+	defer rows.Close()
+
+	return users, nil
 }
 
-func (service UserService) Create(newNote app.Note) (bool, error) {
-	_, err := service.DB.Query(
-		"INSERT INTO notes(user_id, title, content, created_at) VALUES ($1, $2, $3, $4)",
-		&newNote.UserID,
-		&newNote.Title,
-		&newNote.Content,
-		&newNote.CreatedAt,
+func (service UserService) GetUserByUsername(username string) (app.User, error) {
+
+	var user app.User
+	err := service.DB.QueryRow(
+		"SELECT id, username, password, is_admin FROM users WHERE username = $1",
+		username,
+	).Scan(
+		&user.Id,
+		&user.Username,
+		&user.Password,
+		&user.IsAdmin,
 	)
 
 	if err != nil {
-		return false, err
+		return app.User{}, err
 	}
 
-	return true, nil
+	return user, nil
+
 }
 
-func (service UserService) Delete(id string) error {
-	_, err := service.DB.Query(
-		"DELETE FROM notes WHERE id = $1",
-		id,
+func (service UserService) Create() error {
+	cryptPassword, err := crypt.CryptPassword(user.Password)
+
+	if err != nil {
+		return err
+	}
+	_, err = DB.Query(
+		"INSERT INTO users (username, password, is_admin) VALUES ($1, $2, $3)",
+		user.Username, cryptPassword, user.IsAdmin,
 	)
 	if err != nil {
 		return err
