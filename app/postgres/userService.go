@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"log"
 
 	_ "github.com/lib/pq"
 	"github.com/likipiki/RewriteNotes/app"
@@ -45,6 +46,35 @@ func (service UserService) GetAll() (app.Users, error) {
 	defer rows.Close()
 
 	return users, nil
+}
+
+// create admin user if not exists
+func (service UserService) Install() {
+	row := service.DB.QueryRow(
+		"SELECT username FROM users WHERE username = $1",
+		"admin",
+	)
+	var name string
+	err := row.Scan(&name)
+	if name == "" || err != nil {
+		err = row.Scan()
+		pass, err := crypt.CryptPassword("admin")
+		if err != nil {
+			log.Println("error crypting admin password")
+		}
+		user := app.User{
+			Username: "admin",
+			Password: pass,
+			IsAdmin:  true,
+		}
+		_, err = service.DB.Query(
+			"INSERT INTO users (username, password, is_admin) VALUES ($1, $2, $3)",
+			&user.Username, &user.Password, &user.IsAdmin,
+		)
+		if err != nil {
+			log.Println("error creating superuser", err)
+		}
+	}
 }
 
 func (service UserService) Get(username string) (app.User, error) {

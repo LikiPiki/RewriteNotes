@@ -27,6 +27,11 @@ func main() {
 		DB: db,
 	}
 
+	// list Controllers to install default values
+	postgres.Install(
+		userController,
+	)
+
 	r := chi.NewRouter()
 
 	userRouter := routes.UserHandlers{
