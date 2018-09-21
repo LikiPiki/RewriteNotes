@@ -2,7 +2,11 @@ package routes
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
+
+	"github.com/likipiki/RewriteNotes/app"
 
 	"github.com/go-chi/chi"
 
@@ -17,12 +21,13 @@ func (handlers NoteHandlers) NoteCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		noteID := chi.URLParam(r, "note_id")
 		if noteID == "" {
-			next.ServeHTTP(w, r)
+			http.Error(w, http.StatusText(404), 404)
 			return
 		}
 		note, err := handlers.Controller.Get(noteID)
+		fmt.Println("note", note, err)
 		if err != nil {
-			next.ServeHTTP(w, r)
+			http.Error(w, http.StatusText(404), 404)
 			return
 		}
 		ctx := context.WithValue(r.Context(), "note", note)
@@ -33,18 +38,28 @@ func (handlers NoteHandlers) NoteCtx(next http.Handler) http.Handler {
 // Router - register all handler to chi router
 func (handlers NoteHandlers) Router() *chi.Mux {
 	r := chi.NewRouter()
-	r.Use(handlers.NoteCtx)
+	sub := chi.NewRouter()
+	r.Mount("/{note_id}", sub)
+	sub.Use(handlers.NoteCtx)
 
-	r.Put("/{note_id}", handlers.Update)
-	r.Delete("/{note_id}", handlers.Delete)
-	r.Get("/{note_id}", handlers.Get)
-	r.Post("/", handlers.Create)
+	sub.Put("/", handlers.Update)
+	sub.Delete("/", handlers.Delete)
+	sub.Get("/", handlers.Get)
+
+	r.Post("/{note_id}", handlers.Create)
 
 	return r
 }
 
 func (handlers NoteHandlers) Get(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("get all"))
+	ctx := r.Context()
+	note, ok := ctx.Value("note").(app.Note)
+	fmt.Println("ctx", ctx)
+	if !ok {
+		http.Error(w, http.StatusText(422), 422)
+		return
+	}
+	json.NewEncoder(w).Encode(note)
 }
 
 func (handlers NoteHandlers) Create(w http.ResponseWriter, r *http.Request) {
@@ -56,5 +71,13 @@ func (handlers NoteHandlers) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handlers NoteHandlers) Delete(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("delete"))
+	noteID := chi.URLParam(r, "note_id")
+	if noteID == "" {
+		http.Error(w, http.StatusText(404), 404)
+		return
+	}
+	handlers.Controller.Delete(noteID)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+	})
 }
