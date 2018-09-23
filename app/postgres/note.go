@@ -12,6 +12,12 @@ type NoteService struct {
 	DB *sql.DB
 }
 
+func NewNoteService(db *sql.DB) NoteService {
+	return NoteService{
+		DB: db,
+	}
+}
+
 func (s NoteService) Get(id string) (app.Note, error) {
 	var note app.Note
 	row := s.DB.QueryRow(

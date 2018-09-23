@@ -14,6 +14,12 @@ type UserService struct {
 	DB *sql.DB
 }
 
+func NewUserService(db *sql.DB) UserService {
+	return UserService{
+		DB: db,
+	}
+}
+
 func (s UserService) GetAll() (app.Users, error) {
 
 	rows, err := s.DB.Query(

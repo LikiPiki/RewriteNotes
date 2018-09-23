@@ -20,12 +20,8 @@ func main() {
 		panic(err)
 	}
 
-	userController := postgres.UserService{
-		DB: db,
-	}
-	noteController := postgres.NoteService{
-		DB: db,
-	}
+	userController := postgres.NewUserService(db)
+	noteController := postgres.NewNoteService(db)
 
 	// list Controllers to install default values
 	postgres.Install(
@@ -34,15 +30,13 @@ func main() {
 
 	r := chi.NewRouter()
 
-	userRouter := routes.UserHandlers{
-		Controller: userController,
-	}.Router()
-	noteRouter := routes.NoteHandlers{
-		Controller: noteController,
-	}.Router()
+	defaultHandler := routes.NewDefaultHandlers()
+	userHandlers := routes.NewUserHandlers(userController)
+	noteHandlers := routes.NewNoteHandlers(noteController)
 
-	r.Mount("/user", userRouter)
-	r.Mount("/note", noteRouter)
+	r.Mount("/user", userHandlers.Router)
+	r.Mount("/note", noteHandlers.Router)
+	r.Mount("/", defaultHandler.Router)
 
 	fmt.Println("Listening on port :3000")
 	http.ListenAndServe(":3000", r)
