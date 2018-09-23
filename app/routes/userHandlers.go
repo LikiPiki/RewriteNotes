@@ -13,20 +13,20 @@ type UserHandlers struct {
 }
 
 // Router - register all handler to chi router
-func (handlers UserHandlers) Router() *chi.Mux {
+func (h UserHandlers) Router() *chi.Mux {
 	r := chi.NewRouter()
 
 	return r
 }
 
-func (handlers UserHandlers) NoteCtx(next http.Handler) http.Handler {
+func (h UserHandlers) NoteCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userID := chi.URLParam(r, "id")
 		if userID == "" {
 			next.ServeHTTP(w, r)
 			return
 		}
-		user, err := handlers.Controller.Get(userID)
+		user, err := h.Controller.Get(userID)
 		if err != nil {
 			next.ServeHTTP(w, r)
 			return

@@ -12,9 +12,9 @@ type NoteService struct {
 	DB *sql.DB
 }
 
-func (service NoteService) Get(id string) (app.Note, error) {
+func (s NoteService) Get(id string) (app.Note, error) {
 	var note app.Note
-	row := service.DB.QueryRow(
+	row := s.DB.QueryRow(
 		"SELECT id, user_id, title, content, created_at FROM notes WHERE id = $1",
 		&id,
 	)
@@ -33,8 +33,8 @@ func (service NoteService) Get(id string) (app.Note, error) {
 	return note, nil
 }
 
-func (service NoteService) GetAll(id string) (app.Notes, error) {
-	rows, err := service.DB.Query(
+func (s NoteService) GetAll(id string) (app.Notes, error) {
+	rows, err := s.DB.Query(
 		"SELECT id, user_id, title, content, created_at FROM notes WHERE user_id = $1",
 		&id,
 	)
@@ -64,8 +64,8 @@ func (service NoteService) GetAll(id string) (app.Notes, error) {
 	return notes, nil
 }
 
-func (service NoteService) Create(newNote app.Note) (bool, error) {
-	_, err := service.DB.Query(
+func (s NoteService) Create(newNote app.Note) (bool, error) {
+	_, err := s.DB.Query(
 		"INSERT INTO notes(user_id, title, content, created_at) VALUES ($1, $2, $3, $4)",
 		&newNote.UserID,
 		&newNote.Title,
@@ -80,8 +80,8 @@ func (service NoteService) Create(newNote app.Note) (bool, error) {
 	return true, nil
 }
 
-func (service NoteService) Delete(id string) error {
-	_, err := service.DB.Query(
+func (s NoteService) Delete(id string) error {
+	_, err := s.DB.Query(
 		"DELETE FROM notes WHERE id = $1",
 		id,
 	)

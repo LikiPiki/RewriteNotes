@@ -17,14 +17,14 @@ type NoteHandlers struct {
 	Controller postgres.NoteService
 }
 
-func (handlers NoteHandlers) NoteCtx(next http.Handler) http.Handler {
+func (h NoteHandlers) NoteCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		noteID := chi.URLParam(r, "note_id")
 		if noteID == "" {
 			http.Error(w, http.StatusText(404), 404)
 			return
 		}
-		note, err := handlers.Controller.Get(noteID)
+		note, err := h.Controller.Get(noteID)
 		fmt.Println("note", note, err)
 		if err != nil {
 			http.Error(w, http.StatusText(404), 404)
@@ -36,22 +36,22 @@ func (handlers NoteHandlers) NoteCtx(next http.Handler) http.Handler {
 }
 
 // Router - register all handler to chi router
-func (handlers NoteHandlers) Router() *chi.Mux {
+func (h NoteHandlers) Router() *chi.Mux {
 	r := chi.NewRouter()
 	sub := chi.NewRouter()
 	r.Mount("/{note_id}", sub)
-	sub.Use(handlers.NoteCtx)
+	sub.Use(h.NoteCtx)
 
-	sub.Put("/", handlers.Update)
-	sub.Delete("/", handlers.Delete)
-	sub.Get("/", handlers.Get)
+	sub.Put("/", h.Update)
+	sub.Delete("/", h.Delete)
+	sub.Get("/", h.Get)
 
-	r.Post("/{note_id}", handlers.Create)
+	r.Post("/{note_id}", h.Create)
 
 	return r
 }
 
-func (handlers NoteHandlers) Get(w http.ResponseWriter, r *http.Request) {
+func (h NoteHandlers) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	note, ok := ctx.Value("note").(app.Note)
 	fmt.Println("ctx", ctx)
@@ -62,21 +62,21 @@ func (handlers NoteHandlers) Get(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(note)
 }
 
-func (handlers NoteHandlers) Create(w http.ResponseWriter, r *http.Request) {
+func (h NoteHandlers) Create(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("create"))
 }
 
-func (handlers NoteHandlers) Update(w http.ResponseWriter, r *http.Request) {
+func (h NoteHandlers) Update(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("update"))
 }
 
-func (handlers NoteHandlers) Delete(w http.ResponseWriter, r *http.Request) {
+func (h NoteHandlers) Delete(w http.ResponseWriter, r *http.Request) {
 	noteID := chi.URLParam(r, "note_id")
 	if noteID == "" {
 		http.Error(w, http.StatusText(404), 404)
 		return
 	}
-	handlers.Controller.Delete(noteID)
+	h.Controller.Delete(noteID)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
 	})

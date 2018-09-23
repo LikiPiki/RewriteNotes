@@ -14,9 +14,9 @@ type UserService struct {
 	DB *sql.DB
 }
 
-func (service UserService) GetAll() (app.Users, error) {
+func (s UserService) GetAll() (app.Users, error) {
 
-	rows, err := service.DB.Query(
+	rows, err := s.DB.Query(
 		"SELECT id, username, password, is_admin FROM users",
 	)
 
@@ -49,8 +49,8 @@ func (service UserService) GetAll() (app.Users, error) {
 }
 
 // create admin user if not exists
-func (service UserService) Install() {
-	row := service.DB.QueryRow(
+func (s UserService) Install() {
+	row := s.DB.QueryRow(
 		"SELECT username FROM users WHERE username = $1",
 		"admin",
 	)
@@ -67,7 +67,7 @@ func (service UserService) Install() {
 			Password: pass,
 			IsAdmin:  true,
 		}
-		_, err = service.DB.Query(
+		_, err = s.DB.Query(
 			"INSERT INTO users (username, password, is_admin) VALUES ($1, $2, $3)",
 			&user.Username, &user.Password, &user.IsAdmin,
 		)
@@ -77,10 +77,10 @@ func (service UserService) Install() {
 	}
 }
 
-func (service UserService) Get(username string) (app.User, error) {
+func (s UserService) Get(username string) (app.User, error) {
 
 	var user app.User
-	err := service.DB.QueryRow(
+	err := s.DB.QueryRow(
 		"SELECT id, username, password, is_admin FROM users WHERE username = $1",
 		username,
 	).Scan(
@@ -98,13 +98,13 @@ func (service UserService) Get(username string) (app.User, error) {
 
 }
 
-func (service UserService) Create(user app.User) error {
+func (s UserService) Create(user app.User) error {
 	cryptPassword, err := crypt.CryptPassword(user.Password)
 
 	if err != nil {
 		return err
 	}
-	_, err = service.DB.Query(
+	_, err = s.DB.Query(
 		"INSERT INTO users (username, password, is_admin) VALUES ($1, $2, $3)",
 		user.Username, cryptPassword, user.IsAdmin,
 	)
@@ -114,8 +114,8 @@ func (service UserService) Create(user app.User) error {
 	return nil
 }
 
-func (service UserService) Delete(id string) error {
-	_, err := service.DB.Query(
+func (s UserService) Delete(id string) error {
+	_, err := s.DB.Query(
 		"DELETE FROM users WHERE id = $1",
 		id,
 	)
