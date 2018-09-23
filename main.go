@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
-
 	"github.com/likipiki/RewriteNotes/app/postgres"
 	"github.com/likipiki/RewriteNotes/app/routes"
 )

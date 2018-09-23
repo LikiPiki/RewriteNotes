@@ -1,10 +1,10 @@
 package postgres
 
-import (
-	"github.com/likipiki/RewriteNotes/app"
-)
+type Servicer interface {
+	Install()
+}
 
-func Install(services ...app.UserService) {
+func Install(services ...Servicer) {
 	for _, s := range services {
 		s.Install()
 	}

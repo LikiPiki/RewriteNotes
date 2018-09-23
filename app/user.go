@@ -8,7 +8,3 @@ type User struct {
 	IsAdmin  bool   `json:"is_admin"`
 }
 type Users []User
-
-type UserService interface {
-	Install()
-}

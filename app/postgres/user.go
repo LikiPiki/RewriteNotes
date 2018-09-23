@@ -5,14 +5,22 @@ import (
 	"log"
 
 	_ "github.com/lib/pq"
-	"github.com/likipiki/RewriteNotes/app"
 	"github.com/likipiki/VueGoNotes/server/crypt"
 )
 
-// UserService represents a PostgreSQL implementation of app.UserService.
+// UserService represents a PostgreSQL implementation of UserService.
 type UserService struct {
 	DB *sql.DB
 }
+
+type User struct {
+	Id uint `json:"id"`
+
+	Password string `json:"password"`
+	Username string `json:"username"`
+	IsAdmin  bool   `json:"is_admin"`
+}
+type Users []User
 
 func NewUserService(db *sql.DB) UserService {
 	return UserService{
@@ -20,7 +28,7 @@ func NewUserService(db *sql.DB) UserService {
 	}
 }
 
-func (s UserService) GetAll() (app.Users, error) {
+func (s UserService) GetAll() (Users, error) {
 
 	rows, err := s.DB.Query(
 		"SELECT id, username, password, is_admin FROM users",
@@ -30,8 +38,8 @@ func (s UserService) GetAll() (app.Users, error) {
 		return nil, err
 	}
 
-	var users app.Users
-	var user app.User
+	var users Users
+	var user User
 
 	for rows.Next() {
 		err = rows.Scan(
@@ -68,7 +76,7 @@ func (s UserService) Install() {
 		if err != nil {
 			log.Println("error crypting admin password")
 		}
-		user := app.User{
+		user := User{
 			Username: "admin",
 			Password: pass,
 			IsAdmin:  true,
@@ -83,9 +91,9 @@ func (s UserService) Install() {
 	}
 }
 
-func (s UserService) Get(username string) (app.User, error) {
+func (s UserService) Get(username string) (User, error) {
 
-	var user app.User
+	var user User
 	err := s.DB.QueryRow(
 		"SELECT id, username, password, is_admin FROM users WHERE username = $1",
 		username,
@@ -97,14 +105,14 @@ func (s UserService) Get(username string) (app.User, error) {
 	)
 
 	if err != nil {
-		return app.User{}, err
+		return User{}, err
 	}
 
 	return user, nil
 
 }
 
-func (s UserService) Create(user app.User) error {
+func (s UserService) Create(user User) error {
 	cryptPassword, err := crypt.CryptPassword(user.Password)
 
 	if err != nil {
