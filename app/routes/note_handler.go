@@ -14,13 +14,13 @@ import (
 )
 
 type NoteHandlers struct {
-	Controller postgres.NoteService
+	controller postgres.NoteService
 	Router     *chi.Mux
 }
 
 func NewNoteHandlers(contoller postgres.NoteService) NoteHandlers {
 	return NoteHandlers{
-		Controller: contoller,
+		controller: contoller,
 		Router:     NoteHandlers{}.initRouter(),
 	}
 }
@@ -32,7 +32,7 @@ func (h NoteHandlers) NoteCtx(next http.Handler) http.Handler {
 			http.Error(w, http.StatusText(404), 404)
 			return
 		}
-		note, err := h.Controller.Get(noteID)
+		note, err := h.controller.Get(noteID)
 		fmt.Println("note", note, err)
 		if err != nil {
 			http.Error(w, http.StatusText(404), 404)
@@ -84,7 +84,7 @@ func (h NoteHandlers) Delete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(404), 404)
 		return
 	}
-	h.Controller.Delete(noteID)
+	h.controller.Delete(noteID)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
 	})

@@ -9,12 +9,12 @@ import (
 
 // NoteServiced represents a PostgreSQL implementation of NoteService.
 type NoteService struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
 func NewNoteService(db *sql.DB) NoteService {
 	return NoteService{
-		DB: db,
+		db: db,
 	}
 }
 
@@ -31,7 +31,7 @@ type Notes []Note
 
 func (s NoteService) Get(id string) (Note, error) {
 	var note Note
-	row := s.DB.QueryRow(
+	row := s.db.QueryRow(
 		"SELECT id, user_id, title, content, created_at FROM notes WHERE id = $1",
 		&id,
 	)
@@ -51,7 +51,7 @@ func (s NoteService) Get(id string) (Note, error) {
 }
 
 func (s NoteService) GetAll(id string) (Notes, error) {
-	rows, err := s.DB.Query(
+	rows, err := s.db.Query(
 		"SELECT id, user_id, title, content, created_at FROM notes WHERE user_id = $1",
 		&id,
 	)
@@ -82,7 +82,7 @@ func (s NoteService) GetAll(id string) (Notes, error) {
 }
 
 func (s NoteService) Create(newNote Note) (bool, error) {
-	_, err := s.DB.Query(
+	_, err := s.db.Query(
 		"INSERT INTO notes(user_id, title, content, created_at) VALUES ($1, $2, $3, $4)",
 		&newNote.UserID,
 		&newNote.Title,
@@ -98,7 +98,7 @@ func (s NoteService) Create(newNote Note) (bool, error) {
 }
 
 func (s NoteService) Delete(id string) error {
-	_, err := s.DB.Query(
+	_, err := s.db.Query(
 		"DELETE FROM notes WHERE id = $1",
 		id,
 	)

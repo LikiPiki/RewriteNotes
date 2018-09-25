@@ -10,7 +10,7 @@ import (
 
 // UserService represents a PostgreSQL implementation of UserService.
 type UserService struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
 type User struct {
@@ -24,13 +24,13 @@ type Users []User
 
 func NewUserService(db *sql.DB) UserService {
 	return UserService{
-		DB: db,
+		db: db,
 	}
 }
 
 func (s UserService) GetAll() (Users, error) {
 
-	rows, err := s.DB.Query(
+	rows, err := s.db.Query(
 		"SELECT id, username, password, is_admin FROM users",
 	)
 
@@ -64,7 +64,7 @@ func (s UserService) GetAll() (Users, error) {
 
 // create admin user if not exists
 func (s UserService) Install() {
-	row := s.DB.QueryRow(
+	row := s.db.QueryRow(
 		"SELECT username FROM users WHERE username = $1",
 		"admin",
 	)
@@ -81,7 +81,7 @@ func (s UserService) Install() {
 			Password: pass,
 			IsAdmin:  true,
 		}
-		_, err = s.DB.Query(
+		_, err = s.db.Query(
 			"INSERT INTO users (username, password, is_admin) VALUES ($1, $2, $3)",
 			&user.Username, &user.Password, &user.IsAdmin,
 		)
@@ -94,9 +94,30 @@ func (s UserService) Install() {
 func (s UserService) Get(username string) (User, error) {
 
 	var user User
-	err := s.DB.QueryRow(
+	err := s.db.QueryRow(
 		"SELECT id, username, password, is_admin FROM users WHERE username = $1",
 		username,
+	).Scan(
+		&user.Id,
+		&user.Username,
+		&user.Password,
+		&user.IsAdmin,
+	)
+
+	if err != nil {
+		return User{}, err
+	}
+
+	return user, nil
+
+}
+
+func (s UserService) GetById(id interface{}) (User, error) {
+
+	var user User
+	err := s.db.QueryRow(
+		"SELECT id, username, password, is_admin FROM users WHERE id = $1",
+		id,
 	).Scan(
 		&user.Id,
 		&user.Username,
@@ -118,7 +139,7 @@ func (s UserService) Create(user User) error {
 	if err != nil {
 		return err
 	}
-	_, err = s.DB.Query(
+	_, err = s.db.Query(
 		"INSERT INTO users (username, password, is_admin) VALUES ($1, $2, $3)",
 		user.Username, cryptPassword, user.IsAdmin,
 	)
@@ -129,7 +150,7 @@ func (s UserService) Create(user User) error {
 }
 
 func (s UserService) Delete(id string) error {
-	_, err := s.DB.Query(
+	_, err := s.db.Query(
 		"DELETE FROM users WHERE id = $1",
 		id,
 	)
