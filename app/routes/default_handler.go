@@ -12,15 +12,15 @@ type DefaultHandlers struct {
 }
 
 func NewDefaultHandlers() DefaultHandlers {
-	return DefaultHandlers{
-		Router: DefaultHandlers{}.initRouter(),
-	}
+	r := DefaultHandlers{}
+	r.initRouter()
+	return r
 }
 
-func (h DefaultHandlers) initRouter() *chi.Mux {
+func (h *DefaultHandlers) initRouter() {
 	r := chi.NewRouter()
 	r.Get("/", h.hello)
-	return r
+	h.Router = r
 }
 
 func (h DefaultHandlers) hello(w http.ResponseWriter, r *http.Request) {

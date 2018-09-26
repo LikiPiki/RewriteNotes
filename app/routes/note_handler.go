@@ -19,10 +19,11 @@ type NoteHandlers struct {
 }
 
 func NewNoteHandlers(contoller postgres.NoteService) NoteHandlers {
-	return NoteHandlers{
+	h := NoteHandlers{
 		controller: contoller,
-		Router:     NoteHandlers{}.initRouter(),
 	}
+	h.initRouter()
+	return h
 }
 
 func (h NoteHandlers) NoteCtx(next http.Handler) http.Handler {
@@ -44,7 +45,7 @@ func (h NoteHandlers) NoteCtx(next http.Handler) http.Handler {
 }
 
 // Router - register all handler to chi router
-func (h NoteHandlers) initRouter() *chi.Mux {
+func (h *NoteHandlers) initRouter() {
 	r := chi.NewRouter()
 	sub := chi.NewRouter()
 	r.Mount("/{note_id}", sub)
@@ -56,7 +57,7 @@ func (h NoteHandlers) initRouter() *chi.Mux {
 
 	r.Post("/{note_id}", h.Create)
 
-	return r
+	h.Router = r
 }
 
 func (h NoteHandlers) Get(w http.ResponseWriter, r *http.Request) {

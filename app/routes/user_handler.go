@@ -28,22 +28,23 @@ type User struct {
 }
 
 func NewUserHandlers(controller postgres.UserService) UserHandlers {
-	return UserHandlers{
+	h := UserHandlers{
 		controller: controller,
 		tokenAuth:  jwtauth.New("HS256", []byte("mysecret"), nil),
-		Router:     UserHandlers{}.initRouter(),
 	}
+	h.initRouter()
+	return h
 }
 
 // Router - register all handler to chi router
-func (h UserHandlers) initRouter() *chi.Mux {
+func (h *UserHandlers) initRouter() {
 	r := chi.NewRouter()
 	// sub := chi.NewRouter()
 	// r.Mount("/", sub)
 
 	r.Post("/", h.Create)
 	r.Post("/login", h.Login)
-	return r
+	h.Router = r
 }
 
 func (h UserHandlers) NoteCtx(next http.Handler) http.Handler {
